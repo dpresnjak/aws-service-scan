@@ -1,36 +1,36 @@
-import boto3
+class LambdaScanner():
+    def __init__(self, lambda_client):
+        self.lambda_client = lambda_client
+        self.over_memory = ""
+        self.over_conc = ""
 
-lamb = boto3.client("lambda")
-
-class scan_lambdas():
-    response = lamb.list_functions()
-    funcs = response["Functions"]
-    
-    count = 0
-    over_memory = ""
-    over_conc = ""
-    
-    for i in funcs:
-        func_name = funcs[count]["FunctionName"]
-        count = count +1
-    
-        get_func = lamb.get_function(FunctionName=func_name)
-        func_mem = get_func["Configuration"]["MemorySize"]
-    
-        get_func_conc = lamb.get_function_concurrency(FunctionName=func_name)
-        func_conc = 0
-    
+    def scan_lambdas(self):
+        count = 0
+        
         try:
-            func_conc = get_func_conc["ReservedConcurrentExecutions"]
-        except KeyError:
-            pass
-    
-        if func_conc > 5:
-            over_conc += func_name + "\n"
-        else:
-            pass
-    
-        if func_mem > 512:
-            over_memory += func_name + "\n"
-        else:
-            pass
+            response = self.lambda_client.list_functions()
+            functions = response["Functions"]
+            
+            if not functions:
+                return "No Lambda functions found"
+
+            for func in functions:
+                func_name = functions[count]["FunctionName"]
+                count = count + 1
+                
+                func_memory = self.lambda_client.get_function(FunctionName=func_name).get("Configuration").get("MemorySize")
+
+                func_conc = self.lambda_client.get_function_concurrency(FunctionName=func_name).get("ReservedConcurrentExecutions")
+
+                if func_conc is not None:
+                    if func_conc > 5:
+                        self.over_conc += func_name + "\n"
+
+                if func_memory > 512:
+                    self.over_memory += func_name + "\n"
+
+            return self.over_conc, self.over_memory
+            
+        except Exception as e:
+            print(f"Lambda scanning function failed with the following error: {e}")
+            raise Exception(f"Lambda scanning function failed with the following error: {e}")

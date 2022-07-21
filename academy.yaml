@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: Lambda functions for scanning a few AWS services
+Description: Lambda functions for scanning iOLAP Academy services
 
 # Lambdas for scanning - Done
 # Lambda role - Done
@@ -10,30 +10,30 @@ Description: Lambda functions for scanning a few AWS services
 # EventBridge cron job rule - Done
 
 Resources:
-  S3Bucket:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
-    Properties:
-      BucketName: awsscan-lambda-bucket
+  # S3Bucket:
+  #   Type: AWS::S3::Bucket
+  #   DeletionPolicy: Retain
+  #   UpdateReplacePolicy: Retain
+  #   Properties:
+  #     BucketName: academy-lambda-bucket
 
   EventBridgeCron:
     Type: AWS::Events::Rule
     Properties:
-      Name: ScanCron
-      Description: Lambda cronjob for service scans
-      ScheduleExpression: cron(0 16-22 * * ? *)
+      Name: AcademyScanCron
+      Description: Lambda cronjob for Academy
+      ScheduleExpression: cron(36 13 * * ? *)
       Targets: 
         - Arn:
             Fn::GetAtt:
-              - "LambdaScan"
+              - "LambdaAcademy"
               - "Arn"
           Id: "LambdaTarget"
 
   LambdaInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !Ref LambdaScan
+      FunctionName: !Ref LambdaAcademy
       Action: "lambda:InvokeFunction"
       Principal: "events.amazonaws.com"
       SourceArn:
@@ -41,26 +41,26 @@ Resources:
           - "EventBridgeCron"
           - "Arn"
 
-  ScanTopic:
+  AcademyScanTopic:
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: ScanTopic
+      TopicName: AcademyScanTopic
 
-  ScanSub:
+  AcademyScanSub:
     Type: AWS::SNS::Subscription
     Properties:
       Protocol: email
       Endpoint: dpresnjak@iolap.com
-      TopicArn: !Ref ScanTopic
+      TopicArn: !Ref AcademyScanTopic
 
-  LambdaScan:
+  LambdaAcademy:
     Type: AWS::Lambda::Function
     Properties:
       Code:
-        S3Bucket: awsscan-lambda-bucket
+        S3Bucket: academy-lambda-bucket
         S3Key: lambda_function.zip
-      Description: AWS scan scan function
-      FunctionName: "AWSScanLambda"
+      Description: Academy scan function
+      FunctionName: "AcademyScanLambda"
       Handler: lambda_function.lambda_handler
       MemorySize: 256
       Role: !GetAtt LambdaIamRole.Arn
@@ -81,7 +81,7 @@ Resources:
               - "sts:AssumeRole"
       Path: "/"
       Policies:
-        - PolicyName: AWSLambdaScan
+        - PolicyName: AWSLambdaAcademy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -103,10 +103,10 @@ Resources:
                   "sns:Publish",
                   "logs:CreateLogGroup"]
                 Resource: [
-                  "arn:aws:sns:us-east-1:*:ScanTopic",
+                  "arn:aws:sns:us-east-1:*:AcademyScanTopic",
                   "arn:aws:logs:us-east-1:*:*"]
               - Effect: "Allow"
                 Action: [
                   "lambda:ListFunctions",
                   "lambda:GetFunctionConcurrency"]
-                Resource: "arn:aws:lambda:*:*:function:*"
+                Resource: "arn:aws:lambda:*:176984903748:function:*"
