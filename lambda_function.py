@@ -18,9 +18,9 @@ def lambda_handler(event, context):
     over_conc, over_memory = lambda_scanner.scan_lambdas()
     
     sns.publish(
-        TopicArn="arn:aws:sns:us-east-1:*:Topic",
+        TopicArn="arn:aws:sns:us-east-1:176984903748:AcademyScanTopic",
         Subject="iOLAP Academy service scan",
-        Message=f"Lambda functions over the 256MB limit:\n{over_memory}\
+        Message=f"Lambda functions over the 512MB limit:\n{over_memory}\
                 \nLambda functions over the 5 concurrency limit: \n{over_conc}\
                 \nDynamoDB tables over the 5 RCU/WCU: \n{ddb_scanner.scan_tables()}\
                 \nGlue jobs over limits (Workers and/or capacity): \n{over_max}\
